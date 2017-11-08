@@ -19,19 +19,19 @@ namespace IdentityServerOAuth.Extensions
         public static IdentityServerServiceFactory Configure(this IdentityServerServiceFactory factory,
             string connectionString)
         {
-
-           var context = new Context(connectionString);
-            var serviceOptions = new EntityFrameworkServiceOptions {ConnectionString = connectionString};
-            SetupClients(InMemoryManager.GetClients(), serviceOptions);
+            var serviceOptions = new EntityFrameworkServiceOptions {ConnectionString = connectionString,Schema="AuthServer".ToUpper()};
             SetupScopes(InMemoryManager.GetScopes(), serviceOptions);
             SetupUsers(InMemoryManager.GetUsers(), serviceOptions);
+            SetupClients(InMemoryManager.GetClients(), serviceOptions);
             factory.RegisterOperationalServices(serviceOptions);
             factory.RegisterConfigurationServices(serviceOptions);
-            new TokenCleanup(serviceOptions, 1).Start();
+            //factory.Register(new Registration<OperationsDbContext>(resolver=>new OperationsDbContext(serviceOptions.ConnectionString,serviceOptions.Schema)));
             factory.Register(new Registration<Context>(resolver => new Context(connectionString)));
             factory.Register(new Registration<UserStore>());
             factory.Register(new Registration<UserManager>());
-            factory.Register(new Registration<UserManager>());
+            new TokenCleanup(serviceOptions, 1).Start();
+            var context = new Context(serviceOptions.ConnectionString);
+
             var userService =
                 new AspNetIdentityUserService<IdentityUser, string>(new UserManager(new UserStore(context)));
             factory.UserService = new Registration<IUserService>(userService);
@@ -39,11 +39,12 @@ namespace IdentityServerOAuth.Extensions
 
         }
 
+      
         private static void SetupUsers(List<InMemoryUser> getUsers, EntityFrameworkServiceOptions serviceOptions)
         {
             try
             {
-                using (var context = new IdentityDbContext(serviceOptions.ConnectionString))
+                using (var context = new Context(serviceOptions.ConnectionString))
                 {
                     if (context.Users.Any()) return;
 
@@ -92,13 +93,16 @@ namespace IdentityServerOAuth.Extensions
                 }
                 throw;
             }
-
+            catch (Exception )
+            {
+                // ignored
+            }
         }
         public static void SetupScopes(IEnumerable<Scope> scopes,
             EntityFrameworkServiceOptions options)
         {
             using (var context =
-                new ScopeConfigurationDbContext(options.ConnectionString,
+                new ScopeDbCOntext(options.ConnectionString,
                     options.Schema))
             {
                 if (context.Scopes.Any()) return;
@@ -116,17 +120,16 @@ namespace IdentityServerOAuth.Extensions
             EntityFrameworkServiceOptions options)
         {
             using (var context =
-                new ClientConfigurationDbContext(options.ConnectionString,
+                new ClientsDbContext(options.ConnectionString,
                     options.Schema))
             {
-                if (context.Clients.Any()) return;
-
-                foreach (var client in clients)
-                {
-                    context.Clients.Add(client.ToEntity());
-                }
-
-                context.SaveChanges();
+                if (!context.Clients.Any()) return;
+                
+                    foreach (var client in clients)
+                    {
+                        context.Clients.Add(client.ToEntity());
+                    }
+               context.SaveChanges();
             }
         }
 

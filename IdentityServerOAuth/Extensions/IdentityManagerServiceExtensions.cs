@@ -17,7 +17,7 @@ namespace IdentityServerOAuth.Extensions
             factory.Register(new Registration<RoleStore>());
             factory.Register(new Registration<UserManager>());
             factory.Register(new Registration<RoleManager>());
-            var clientstore = new ClientStore(new ClientConfigurationDbContext(connectionString));
+            var clientstore = new ClientStore(new ClientsDbContext(connectionString));
             factory.Register(new Registration<IClientStore>(clientstore));
 
             factory.IdentityManagerService = new Registration<IIdentityManagerService, IdentityManagerService>();

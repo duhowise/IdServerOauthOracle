@@ -1,7 +1,7 @@
 ﻿using System.Data.Entity;
 using Microsoft.AspNet.Identity.EntityFramework;
 
-namespace IdentityServerOAuth.Entities
+namespace IdentityServerOAuth.Extensions
 {
     public class Context : IdentityDbContext<IdentityUser, IdentityRole, string, IdentityUserLogin, IdentityUserRole, IdentityUserClaim>
     {
@@ -9,8 +9,9 @@ namespace IdentityServerOAuth.Entities
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            modelBuilder.Types().Configure(c=>c.ToTable(c.ClrType.Name.ToUpperInvariant()));
             base.OnModelCreating(modelBuilder);
+            modelBuilder.HasDefaultSchema("AuthServer".ToUpperInvariant());
+            modelBuilder.Types().Configure(c => c.ToTable(c.ClrType.Name.ToUpperInvariant()));
         }
     }
 

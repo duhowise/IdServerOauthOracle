@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNet.Identity.EntityFramework;
+﻿using IdentityServerOAuth.Extensions;
+using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace IdentityServerOAuth.Entities
 {
